@@ -1,4 +1,11 @@
-const API_URL = 'http://localhost:3000/api/tasks';
+if (!localStorage.getItem('token')) {
+
+    window.location.href = 'login.html';
+
+}
+
+const API_URL = 'https://cloudtasks-api-gncaf0h8cwcqgkfh.eastus2-01.azurewebsites.net/api/tasks';
+const token = localStorage.getItem('token');
 
 const taskList = document.getElementById('taskList');
 
@@ -6,16 +13,200 @@ const totalTasks = document.getElementById('totalTasks');
 
 const completedTasks = document.getElementById('completedTasks');
 
-async function fetchTasks(){
+const themeToggle = document.getElementById('themeToggle');
+const notificationBox = document.getElementById('notificationBox');
+let taskChart;
 
-    const response = await fetch(API_URL);
 
+
+// =========================
+// THEME MODE
+// =========================
+
+if (localStorage.getItem('theme') === 'light') {
+
+    document.body.classList.add('light-mode');
+
+}
+
+themeToggle.addEventListener('click', () => {
+
+    document.body.classList.toggle('light-mode');
+
+    if (document.body.classList.contains('light-mode')) {
+
+        localStorage.setItem('theme', 'light');
+
+    } else {
+
+        localStorage.setItem('theme', 'dark');
+
+    }
+
+});
+
+
+function renderChart(tasks) {
+
+    const completed = tasks.filter(task => task.completed).length;
+
+    const pending = tasks.filter(task => !task.completed).length;
+
+    const alta = tasks.filter(task => task.priority === 'Alta').length;
+
+    const media = tasks.filter(task => task.priority === 'Media').length;
+
+    const baja = tasks.filter(task => task.priority === 'Baja').length;
+
+
+
+    const ctx = document.getElementById('taskChart');
+
+
+
+    if (taskChart) {
+
+        taskChart.destroy();
+
+    }
+
+
+
+    taskChart = new Chart(ctx, {
+
+        type: 'bar',
+
+        data: {
+
+            labels: [
+
+                'Completadas',
+
+                'Pendientes',
+
+                'Alta',
+
+                'Media',
+
+                'Baja'
+
+            ],
+
+            datasets: [{
+
+                label: 'Tareas',
+
+                data: [
+
+                    completed,
+
+                    pending,
+
+                    alta,
+
+                    media,
+
+                    baja
+
+                ],
+
+                backgroundColor: [
+
+                    '#28a745',
+
+                    '#dc3545',
+
+                    '#ff4d4d',
+
+                    '#ffb84d',
+
+                    '#4dff88'
+
+                ],
+
+                borderRadius: 8
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            maintainAspectRatio: false,
+
+            plugins: {
+
+                legend: {
+
+                    display: false
+                }
+
+            },
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: true,
+
+                    ticks: {
+
+                        color: localStorage.getItem('theme') === 'light'
+                            ? '#222'
+                            : '#fff'
+                    }
+
+                },
+
+                x: {
+
+                    ticks: {
+
+                        color: localStorage.getItem('theme') === 'light'
+                            ? '#222'
+                            : '#fff'
+                    }
+
+                }
+
+            }
+
+        }
+
+    });
+
+}
+
+// =========================
+// FETCH TASKS
+// =========================
+
+async function fetchTasks() {
+
+    const response = await fetch(API_URL, {
+
+    headers: {
+
+        Authorization: `Bearer ${token}`
+
+    }
+
+});
     const tasks = await response.json();
 
     renderTasks(tasks);
+    renderChart(tasks);
 }
 
-function renderTasks(tasks){
+
+
+// =========================
+// RENDER TASKS
+// =========================
+
+function renderTasks(tasks) {
 
     taskList.innerHTML = '';
 
@@ -25,18 +216,118 @@ function renderTasks(tasks){
 
     completedTasks.textContent = completed.length;
 
+    const pendingTasks = tasks.length - completed.length;
+
+notificationBox.innerHTML = `
+    ⚠️ Tienes ${pendingTasks} tareas pendientes
+`;
+
     tasks.forEach(task => {
+
+        const today = new Date();
+
+today.setHours(0, 0, 0, 0);
+
+const dueDate = task.dueDate
+    ? new Date(task.dueDate)
+    : null;
+
+if (dueDate) {
+    dueDate.setHours(0, 0, 0, 0);
+}
+
+let statusClass = '';
+
+let statusText = '';
+
+
+
+if (dueDate) {
+
+    if (dueDate < today && !task.completed) {
+
+        statusClass = 'overdue';
+
+        statusText = '⚠️ Vencida';
+
+    }
+
+    else {
+
+        const diffTime = dueDate - today;
+
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        if (diffDays <= 2 && !task.completed) {
+
+            statusClass = 'soon';
+
+            statusText = '⏳ Próxima';
+
+        }
+
+    }
+
+}
 
         const li = document.createElement('li');
 
-        li.classList.add('task');
 
-        if(task.completed){
-            li.classList.add('completed');
+
+        let priorityClass = '';
+
+        if (task.priority === 'Alta') {
+
+            priorityClass = 'priority-alta';
+
+        } else if (task.priority === 'Media') {
+
+            priorityClass = 'priority-media';
+
+        } else {
+
+            priorityClass = 'priority-baja';
+
         }
 
+
+
+li.className = `task ${priorityClass} ${statusClass}`;
+        if (task.completed) {
+
+            li.classList.add('completed');
+
+        }
+
+
+
         li.innerHTML = `
-            <span>${task.title}</span>
+
+            <div class="task-info">
+
+                <h3>${task.title}</h3>
+
+                <p>📂 Categoría: <strong>${task.category || 'General'}</strong></p>
+
+                <p>⚡ Prioridad: <strong>${task.priority || 'Media'}</strong></p>
+
+                <p>
+                <p>
+    <strong>${statusText}</strong>
+</p>
+                    📅 Fecha límite:
+                    <strong>
+                        ${
+                            task.dueDate
+                            ? new Date(task.dueDate).toLocaleDateString('es-MX', {
+    timeZone: 'UTC'
+})
+                            : 'Sin fecha'
+                        }
+                    </strong>
+                </p>
+
+            </div>
 
             <div class="task-buttons">
 
@@ -58,49 +349,129 @@ function renderTasks(tasks){
         `;
 
         taskList.appendChild(li);
+
     });
 }
 
-async function addTask(){
 
-    const input = document.getElementById('taskInput');
 
-    if(input.value.trim() === '') return;
+// =========================
+// ADD TASK
+// =========================
+
+async function addTask() {
+
+    const taskInput = document.getElementById('taskInput');
+
+    const categoryInput = document.getElementById('categoryInput');
+
+    const priorityInput = document.getElementById('priorityInput');
+
+    const dueDateInput = document.getElementById('dueDateInput');
+
+
+
+    if (taskInput.value.trim() === '') return;
+
+
 
     await fetch(API_URL, {
 
-        method:'POST',
+        method: 'POST',
 
-        headers:{
-            'Content-Type':'application/json'
+        headers: {
+
+            'Content-Type': 'application/json',
+
+            Authorization: `Bearer ${token}`
+
         },
 
-        body:JSON.stringify({
-            title:input.value
+        body: JSON.stringify({
+
+            title: taskInput.value,
+
+            category: categoryInput.value,
+
+            priority: priorityInput.value,
+
+            dueDate: dueDateInput.value
+
         })
+
     });
 
-    input.value = '';
+
+
+    taskInput.value = '';
+
+    dueDateInput.value = '';
+
+
 
     fetchTasks();
+
 }
 
-async function deleteTask(id){
+// =========================
+// DELETE TASK
+// =========================
+
+async function deleteTask(id) {
 
     await fetch(`${API_URL}/${id}`, {
-        method:'DELETE'
-    });
 
+    method: 'DELETE',
+
+    headers: {
+
+        Authorization: `Bearer ${token}`
+
+    }
+
+});
     fetchTasks();
 }
 
-async function toggleTask(id){
+
+
+// =========================
+// TOGGLE TASK
+// =========================
+
+async function toggleTask(id) {
 
     await fetch(`${API_URL}/${id}`, {
-        method:'PUT'
-    });
+
+    method: 'PUT',
+
+    headers: {
+
+        Authorization: `Bearer ${token}`
+
+    }
+
+});
 
     fetchTasks();
 }
+
+
+
+// =========================
+// INITIAL LOAD
+// =========================
 
 fetchTasks();
+
+function logout() {
+
+    localStorage.removeItem('token');
+
+    localStorage.removeItem('user');
+
+
+
+    window.location.href = 'login.html';
+
+}

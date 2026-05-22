@@ -1,0 +1,8 @@
+{
+    "appService.zipIgnorePattern": [
+        "node_modules{,/**}",
+        ".vscode{,/**}"
+    ],
+    "appService.defaultWebAppToDeploy": "/subscriptions/0c520260-36c9-4ef2-bd7c-9f5517d9a5a2/resourceGroups/CloudTasksGroup/providers/Microsoft.Web/sites/cloudtasks-api",
+    "appService.deploySubpath": "."
+}

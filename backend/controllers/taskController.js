@@ -1,43 +1,179 @@
 const Task = require('../models/Task');
 
-const getTasks = async (req, res) => {
-    const tasks = await Task.find().sort({ createdAt: -1 });
-    res.json(tasks);
+
+
+// GET TASKS
+
+exports.getTasks = async (req, res) => {
+
+    try {
+
+        const tasks = await Task.find({
+
+            user: req.user.id
+
+        });
+
+
+
+        res.json(tasks);
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            message: error.message
+
+        });
+
+    }
+
 };
 
-const createTask = async (req, res) => {
-    const { title } = req.body;
 
-    const task = await Task.create({
-        title
-    });
 
-    res.json(task);
+// CREATE TASK
+
+exports.createTask = async (req, res) => {
+
+    try {
+
+        const task = new Task({
+
+            title: req.body.title,
+
+            category: req.body.category,
+
+            priority: req.body.priority,
+
+            dueDate: req.body.dueDate,
+
+            user: req.user.id
+
+        });
+
+
+
+        const savedTask = await task.save();
+
+        res.status(201).json(savedTask);
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            message: error.message
+
+        });
+
+    }
+
 };
 
-const deleteTask = async (req, res) => {
-    await Task.findByIdAndDelete(req.params.id);
 
-    res.json({
-        message: 'Tarea eliminada'
-    });
-};
 
-const completeTask = async (req, res) => {
-    const task = await Task.findById(req.params.id);
+// UPDATE TASK
 
-    if(task){
+exports.updateTask = async (req, res) => {
+
+    try {
+
+        const task = await Task.findOne({
+
+            _id: req.params.id,
+
+            user: req.user.id
+
+        });
+
+
+
+        if (!task) {
+
+            return res.status(404).json({
+
+                message: 'Tarea no encontrada'
+
+            });
+
+        }
+
+
+
         task.completed = !task.completed;
 
-        const updatedTask = await task.save();
 
-        res.json(updatedTask);
+
+        await task.save();
+
+
+
+        res.json(task);
+
     }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            message: error.message
+
+        });
+
+    }
+
 };
 
-module.exports = {
-    getTasks,
-    createTask,
-    deleteTask,
-    completeTask
+
+
+// DELETE TASK
+
+exports.deleteTask = async (req, res) => {
+
+    try {
+
+        const task = await Task.findOneAndDelete({
+
+            _id: req.params.id,
+
+            user: req.user.id
+
+        });
+
+
+
+        if (!task) {
+
+            return res.status(404).json({
+
+                message: 'Tarea no encontrada'
+
+            });
+
+        }
+
+
+
+        res.json({
+
+            message: 'Tarea eliminada'
+
+        });
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            message: error.message
+
+        });
+
+    }
+
 };

@@ -1,30 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>CloudTasks App</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
     <div class="container">
 
-        <h1>CloudTasks App</h1>
+        <h1>☁️ CloudTasks App</h1>
 
-        <p class="subtitle">
-            Gestión profesional de tareas en la nube
-        </p>
+        <button id="themeToggle">
+            🌙 Cambiar Tema
+            <button onclick="logout()">
+    🚪 Cerrar Sesión
+</button>
+        </button>
 
-        <div class="task-input">
+<div id="notificationBox"></div>
+
+        <!-- FORMULARIO -->
+
+        <div class="task-form">
 
             <input
                 type="text"
                 id="taskInput"
-                placeholder="Escribe una nueva tarea"
+                placeholder="Escribe una tarea..."
             >
+
+
+
+            <!-- CATEGORÍAS -->
+
+            <select id="categoryInput">
+
+                <option value="General">
+                    General
+                </option>
+
+                <option value="Escuela">
+                    Escuela
+                </option>
+
+                <option value="Trabajo">
+                    Trabajo
+                </option>
+
+                <option value="Personal">
+                    Personal
+                </option>
+
+            </select>
+
+
+
+            <!-- PRIORIDAD -->
+
+            <select id="priorityInput">
+
+                <option value="Baja">
+                    Baja
+                </option>
+
+                <option value="Media" selected>
+                    Media
+                </option>
+
+                <option value="Alta">
+                    Alta
+                </option>
+
+            </select>
+
+
+
+            <!-- FECHA -->
+
+            <input
+                type="date"
+                id="dueDateInput"
+            >
+
+
+
+            <!-- BOTÓN -->
 
             <button onclick="addTask()">
                 Agregar
@@ -32,25 +101,53 @@
 
         </div>
 
-        <div class="stats">
+
+
+        <!-- DASHBOARD -->
+
+        <div class="dashboard">
 
             <div class="card">
-                <h3 id="totalTasks">0</h3>
-                <p>Total</p>
+
+                <h2 id="totalTasks">
+                    0
+                </h2>
+
+                <p>Total Tareas</p>
+
             </div>
 
+
+
             <div class="card">
-                <h3 id="completedTasks">0</h3>
+
+                <h2 id="completedTasks">
+                    0
+                </h2>
+
                 <p>Completadas</p>
+
             </div>
 
         </div>
+
+
+
+        <!-- LISTA -->
+<div class="chart-container">
+
+    <canvas id="taskChart"></canvas>
+
+</div>
 
         <ul id="taskList"></ul>
 
     </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 
 </body>
+
 </html>
